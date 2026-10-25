@@ -1,0 +1,37 @@
+﻿@baseUrl = http://localhost:5001
+@userId = 1
+
+### Health
+GET {{baseUrl}}/health
+
+### List users
+GET {{baseUrl}}/api/users
+
+### Create a user; copy the returned id into userId above
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "firstName": "Taylor",
+  "lastName": "Student",
+  "email": "taylor@example.com",
+  "graduationDate": "2027-05-15"
+}
+
+### Read a user
+GET {{baseUrl}}/api/users/{{userId}}
+
+### Replace editable user fields
+PUT {{baseUrl}}/api/users/{{userId}}
+Content-Type: application/json
+
+{
+  "firstName": "Taylor Updated",
+  "lastName": "Student",
+  "email": "taylor@example.com",
+  "graduationDate": "2027-05-15"
+}
+
+### Delete the user (after cleaning up reminders and applications)
+DELETE {{baseUrl}}/api/users/{{userId}}
+

@@ -1,0 +1,44 @@
+﻿@baseUrl = http://localhost:5003
+@userId = 1
+@applicationId = 1
+@reminderId = 1
+
+### Health
+GET {{baseUrl}}/health
+
+### List reminders
+GET {{baseUrl}}/api/reminders
+
+### List reminders for a user
+GET {{baseUrl}}/api/reminders/user/{{userId}}
+
+### Create a reminder; copy its returned id into reminderId
+POST {{baseUrl}}/api/reminders
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "applicationId": {{applicationId}},
+  "title": "Prepare for interview",
+  "dueDate": "2026-11-04T15:00:00Z",
+  "completed": false
+}
+
+### Read a reminder
+GET {{baseUrl}}/api/reminders/{{reminderId}}
+
+### Replace editable reminder fields and mark completed
+PUT {{baseUrl}}/api/reminders/{{reminderId}}
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "applicationId": {{applicationId}},
+  "title": "Prepare for interview",
+  "dueDate": "2026-11-04T15:00:00Z",
+  "completed": true
+}
+
+### Delete a reminder
+DELETE {{baseUrl}}/api/reminders/{{reminderId}}
+

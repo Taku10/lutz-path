@@ -1,0 +1,49 @@
+﻿services:
+  userservice:
+    build:
+      context: ./src/LutzPath.UserService
+    ports:
+      - "127.0.0.1:${USER_SERVICE_PORT:-5001}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Data Source=/data/users.db"
+    volumes:
+      - users-data:/data
+
+  jobapplicationservice:
+    build:
+      context: ./src/LutzPath.JobApplicationService
+    ports:
+      - "127.0.0.1:${JOB_APPLICATION_SERVICE_PORT:-5002}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Data Source=/data/jobapplications.db"
+      Services__UserService: "http://userservice:8080/"
+    volumes:
+      - applications-data:/data
+    # Startup order only; HTTP calls still handle unavailable dependencies.
+    depends_on:
+      - userservice
+
+  reminderservice:
+    build:
+      context: ./src/LutzPath.ReminderService
+    ports:
+      - "127.0.0.1:${REMINDER_SERVICE_PORT:-5003}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Data Source=/data/reminders.db"
+      Services__JobApplicationService: "http://jobapplicationservice:8080/"
+    volumes:
+      - reminders-data:/data
+    depends_on:
+      - jobapplicationservice
+
+volumes:
+  users-data:
+  applications-data:
+  reminders-data:
+

@@ -1,0 +1,89 @@
+﻿@baseUrl = http://localhost:5002
+@userId = 1
+@jobId = 1
+@applicationId = 1
+
+### Health
+GET {{baseUrl}}/health
+
+### List jobs
+GET {{baseUrl}}/api/jobs
+
+### Create a job; copy its returned id into jobId
+POST {{baseUrl}}/api/jobs
+Content-Type: application/json
+
+{
+  "company": "Example Company",
+  "title": "Graduate Developer",
+  "location": "Chicago",
+  "jobUrl": "https://example.com/jobs/1",
+  "description": "Entry-level C# role",
+  "datePosted": "2026-10-24"
+}
+
+### Read a job
+GET {{baseUrl}}/api/jobs/{{jobId}}
+
+### Replace editable job fields
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+
+{
+  "company": "Example Company",
+  "title": "Graduate Developer",
+  "location": "Remote",
+  "jobUrl": "https://example.com/jobs/1",
+  "description": "Entry-level C# role",
+  "datePosted": "2026-10-24"
+}
+
+### List applications
+GET {{baseUrl}}/api/applications
+
+### List applications for a user
+GET {{baseUrl}}/api/applications/user/{{userId}}
+
+### Create an application; copy its returned id into applicationId
+POST {{baseUrl}}/api/applications
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "jobId": {{jobId}},
+  "status": "Applied",
+  "dateApplied": "2026-10-24T15:00:00Z",
+  "interviewDate": null,
+  "notes": "Submitted online."
+}
+
+### Read an application
+GET {{baseUrl}}/api/applications/{{applicationId}}
+
+### Replace editable application fields and record an interview
+PUT {{baseUrl}}/api/applications/{{applicationId}}
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "jobId": {{jobId}},
+  "status": "Interview",
+  "dateApplied": "2026-10-24T15:00:00Z",
+  "interviewDate": "2026-11-05T15:00:00Z",
+  "notes": "Interview booked."
+}
+
+### Update only the status
+PATCH {{baseUrl}}/api/applications/{{applicationId}}/status
+Content-Type: application/json
+
+{
+  "status": "Offer"
+}
+
+### Delete an application (clean up reminders first)
+DELETE {{baseUrl}}/api/applications/{{applicationId}}
+
+### Delete a job (409 if applications still reference it)
+DELETE {{baseUrl}}/api/jobs/{{jobId}}
+
