@@ -1,0 +1,18 @@
+services:
+  jobapplicationservice:
+    environment:
+      GoogleSheets__Enabled: "true"
+      GoogleSheets__AutomaticSyncEnabled: "${GOOGLE_SHEETS_AUTOMATIC_SYNC:-false}"
+      GoogleSheets__AssignMissingIds: "true"
+      GoogleSheets__IntervalSeconds: "300"
+      GoogleSheets__UserId: "1"
+      GoogleSheets__SpreadsheetId: "1SsPnoL4DgcDeFCjC66Rj3tl76ihpJdP6Ql4QwkeVd1M"
+      GoogleSheets__SheetName: "Sheet1"
+      GoogleSheets__SheetId: "655736542"
+      GoogleSheets__CredentialsPath: "/run/secrets/google_sheets_credentials"
+    secrets:
+      - google_sheets_credentials
+
+secrets:
+  google_sheets_credentials:
+    file: ${GOOGLE_SHEETS_CREDENTIALS_FILE:?Set GOOGLE_SHEETS_CREDENTIALS_FILE in .env to your local service-account JSON path}

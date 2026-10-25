@@ -8,5 +8,6 @@ public enum ApplicationStatus
     Interview,
     Offer,
     Rejected,
-    Withdrawn
+    Withdrawn,
+    NotApplied
 }

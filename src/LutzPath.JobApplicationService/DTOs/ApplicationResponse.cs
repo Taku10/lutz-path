@@ -9,4 +9,10 @@ public record ApplicationResponse(
     ApplicationStatus Status,
     DateTime? DateApplied,
     DateTime? InterviewDate,
-    string? Notes);
+    string? Notes,
+    DateOnly? DateFound,
+    string? Priority,
+    string? InterviewPrepNotes,
+    string? ResumeTips,
+    string? DsaTopicsToKnow,
+    string? AdditionalSourceNotes);

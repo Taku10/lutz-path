@@ -23,4 +23,20 @@ public class ApplicationRequest
 
     [StringLength(10000)]
     public string? Notes { get; set; }
+    public DateOnly? DateFound { get; set; }
+
+    [StringLength(20000)]
+    public string? Priority { get; set; }
+
+    [StringLength(20000)]
+    public string? InterviewPrepNotes { get; set; }
+
+    [StringLength(20000)]
+    public string? ResumeTips { get; set; }
+
+    [StringLength(20000)]
+    public string? DsaTopicsToKnow { get; set; }
+
+    [StringLength(20000)]
+    public string? AdditionalSourceNotes { get; set; }
 }

@@ -19,13 +19,13 @@ public class JobService : IJobService
     public async Task<List<JobResponse>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await _db.Jobs.AsNoTracking().OrderBy(entity => entity.Id)
-            .Select(entity => new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted)).ToListAsync(cancellationToken);
+            .Select(entity => new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted, entity.OptFriendlyInformation, entity.H1bVisaInformation, entity.LikelyInterviewProcess, entity.PostingAvailability, entity.LastAvailabilityCheck, entity.AvailabilityCheckNotes)).ToListAsync(cancellationToken);
     }
 
     public async Task<JobResponse?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         return await _db.Jobs.AsNoTracking().Where(entity => entity.Id == id)
-            .Select(entity => new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted)).SingleOrDefaultAsync(cancellationToken);
+            .Select(entity => new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted, entity.OptFriendlyInformation, entity.H1bVisaInformation, entity.LikelyInterviewProcess, entity.PostingAvailability, entity.LastAvailabilityCheck, entity.AvailabilityCheckNotes)).SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<JobResponse> CreateAsync(JobRequest request, CancellationToken cancellationToken)
@@ -85,8 +85,14 @@ public class JobService : IJobService
         entity.JobUrl = request.JobUrl?.Trim();
         entity.Description = request.Description?.Trim();
         entity.DatePosted = request.DatePosted;
+        entity.OptFriendlyInformation = request.OptFriendlyInformation?.Trim();
+        entity.H1bVisaInformation = request.H1bVisaInformation?.Trim();
+        entity.LikelyInterviewProcess = request.LikelyInterviewProcess?.Trim();
+        entity.PostingAvailability = request.PostingAvailability;
+        entity.LastAvailabilityCheck = request.LastAvailabilityCheck;
+        entity.AvailabilityCheckNotes = request.AvailabilityCheckNotes?.Trim();
     }
 
     private static JobResponse ToResponse(Job entity) =>
-        new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted);
+        new JobResponse(entity.Id, entity.Company, entity.Title, entity.Location, entity.JobUrl, entity.Description, entity.DatePosted, entity.OptFriendlyInformation, entity.H1bVisaInformation, entity.LikelyInterviewProcess, entity.PostingAvailability, entity.LastAvailabilityCheck, entity.AvailabilityCheckNotes);
 }

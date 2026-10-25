@@ -1,4 +1,14 @@
-﻿services:
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      - userservice
+      - jobapplicationservice
+      - reminderservice
+
   userservice:
     build:
       context: ./src/LutzPath.UserService

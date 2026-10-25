@@ -1,5 +1,5 @@
-﻿param(
-    [ValidateRange(1024, 65533)]
+param(
+    [ValidateRange(1024, 65532)]
     [int]$BasePort = 5201
 )
 
@@ -10,10 +10,11 @@ $runDirectory = Join-Path $root ('.artifacts/' + $project)
 New-Item -ItemType Directory -Force -Path $runDirectory | Out-Null
 $composeArguments = @('--project-name', $project, '--file', (Join-Path $root 'docker-compose.yml'))
 $services = @('userservice', 'jobapplicationservice', 'reminderservice')
-$oldPorts = @($env:USER_SERVICE_PORT, $env:JOB_APPLICATION_SERVICE_PORT, $env:REMINDER_SERVICE_PORT)
+$oldPorts = @($env:USER_SERVICE_PORT, $env:JOB_APPLICATION_SERVICE_PORT, $env:REMINDER_SERVICE_PORT, $env:FRONTEND_PORT)
 $env:USER_SERVICE_PORT = [string]$BasePort
 $env:JOB_APPLICATION_SERVICE_PORT = [string]($BasePort + 1)
 $env:REMINDER_SERVICE_PORT = [string]($BasePort + 2)
+$env:FRONTEND_PORT = [string]($BasePort + 3)
 $script:checks = 0
 $composeStarted = $false
 
@@ -199,5 +200,6 @@ try {
     $env:USER_SERVICE_PORT = $oldPorts[0]
     $env:JOB_APPLICATION_SERVICE_PORT = $oldPorts[1]
     $env:REMINDER_SERVICE_PORT = $oldPorts[2]
+    $env:FRONTEND_PORT = $oldPorts[3]
     Write-Output "Test logs and project details: $runDirectory"
 }

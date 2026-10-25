@@ -22,4 +22,21 @@ public class JobRequest
 
 
     public DateOnly? DatePosted { get; set; }
+    [StringLength(20000)]
+    public string? OptFriendlyInformation { get; set; }
+
+    [StringLength(20000)]
+    public string? H1bVisaInformation { get; set; }
+
+    [StringLength(20000)]
+    public string? LikelyInterviewProcess { get; set; }
+
+    [RegularExpression("^(Unknown|Open|Closed)$")]
+    public string PostingAvailability { get; set; } = "Unknown";
+
+    [LutzPath.JobApplicationService.Validation.UtcDateTime]
+    public DateTime? LastAvailabilityCheck { get; set; }
+
+    [StringLength(20000)]
+    public string? AvailabilityCheckNotes { get; set; }
 }
