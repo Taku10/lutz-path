@@ -1,10 +1,11 @@
 import { icon } from './icons.js';
+import { configureResumes, renderResumes, openTailoring } from './resumes.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const trackerFilters = { priority: '', availability: '', city: '' };
 const statusLabel = status => ({ NotApplied: 'Not applied', Assessment: 'OA / Assessment', Interview: 'Interviewing' }[status] || status);
 const statuses = ['NotApplied', 'Saved', 'Applied', 'Assessment', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
-const views = { jobs: 'Jobs', companies: 'Companies', applications: 'Applications', reminders: 'Reminders' };
+const views = { jobs: 'Jobs', companies: 'Companies', applications: 'Applications', reminders: 'Reminders', resumes: 'Resumes' };
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const readPreference = key => { try { return localStorage.getItem(key); } catch { return null; } };
 const savePreference = (key, value) => { try { localStorage.setItem(key, value); } catch { /* The workspace also works without local storage. */ } };
@@ -16,6 +17,7 @@ const state = {
   sheetSync: null, errors: [], loading: true
 };
 let loadVersion = 0;
+configureResumes({ userId: () => state.userId });
 let editorState = null;
 let saving = false;
 let busyAction = false;
@@ -143,7 +145,7 @@ function render() {
   const main = $('#main');
   main.setAttribute('aria-busy', String(state.loading));
   if (state.loading) return;
-  main.innerHTML = ({ jobs: renderWorkspaceJobs, companies: renderCompanyDirectory, company: renderCompanyJobs, job: renderJobDetail, applications: renderSubmittedApplications, reminders: renderReminders })[state.view]();
+  main.innerHTML = ({ jobs: renderWorkspaceJobs, companies: renderCompanyDirectory, company: renderCompanyJobs, job: renderJobDetail, applications: renderSubmittedApplications, reminders: renderReminders, resumes: renderResumes })[state.view]();
   if (restoreSearch) {
     const search = $('#workspace-search');
     search?.focus({ preventScroll: true });
@@ -541,7 +543,7 @@ function renderJobDetail() {
   const reminders = state.reminders.filter(r=>r.applicationId===application.id);
   return `<button class="back-link" data-action="return-list">← Back to list</button>` +
     pageHeading(job.company,escape(job.title),job.location || 'Location not recorded',
-      actionButton('Update application','edit-application','edit',true,`data-id="${application.id}"`)) +
+      actionButton('Tailor resume','tailor-resume','edit',true,`data-id="${application.id}"`) + actionButton('Update application','edit-application','edit',false,`data-id="${application.id}"`)) +
     `<div class="detail-actions">${actionButton('Edit job details','edit-job','edit',false,`data-id="${job.id}"`)}${actionButton('Add reminder','new-reminder','plus',false,`data-id="${application.id}"`)}${url ? `<a class="button" href="${escape(url)}" target="_blank" rel="noopener noreferrer">Open original posting ${icon('upRight')}</a>` : ''}<button class="text-button" data-action="company-detail" data-company="${escape(companyKey(job.company))}">All jobs at ${escape(job.company)}</button></div>
     <div class="detail-grid"><section class="panel detail-panel"><h2>Job information</h2><dl>${detailText('Location',job.location)}${detailText('Date found',foundLabel(application.dateFound))}${detailText('Date posted',foundLabel(job.datePosted))}${detailText('Availability',job.postingAvailability)}${detailText('Description',job.description)}</dl><details><summary>Availability evidence</summary><dl>${detailText('Last checked',job.lastAvailabilityCheck ? formatDate(job.lastAvailabilityCheck,{year:'numeric'})+' · '+formatTime(job.lastAvailabilityCheck) : null)}${detailText('Source evidence',job.availabilityCheckNotes)}</dl></details></section>
     <section class="panel detail-panel"><h2>My application</h2>${badge(application.status)}<dl>${detailText('Applied',application.dateApplied ? formatDate(application.dateApplied,{year:'numeric'}) : null)}${detailText('Interview',application.interviewDate ? formatDate(application.interviewDate,{year:'numeric'})+' · '+formatTime(application.interviewDate) : null)}${detailText('Priority',application.priority)}${detailText('Comments',application.notes)}</dl></section>
@@ -561,11 +563,17 @@ function sheetSyncPanel() {
 }
 async function syncSheetNow(button) {
   if(busyAction)return;busyAction=true;button.disabled=true;
+  $('#refresh-button').classList.add('spinning');
   try {
     const result=await api('/integrations/google-sheets/sync',{method:'POST',signal:AbortSignal.timeout(100000)});
     toast(result.created+' new jobs, '+result.updated+' updated.');
   } catch(error){toast(error.message,true);}
-  finally{busyAction=false;await loadWorkspace();}
+  finally{try{await loadWorkspace();}finally{busyAction=false;button.disabled=false;$('#refresh-button').classList.remove('spinning');}}
+}
+async function refreshWorkspace(button) {
+  if(busyAction)return;
+  if(state.sheetSync?.enabled && state.sheetSync.userId===state.userId) return syncSheetNow(button);
+  await loadWorkspace();
 }
 setInterval(async()=>{
   if(document.visibilityState!=='visible'||!state.sheetSync?.automaticUpdatesEnabled||saving||$('#editor').open)return;
@@ -622,6 +630,11 @@ document.addEventListener('click', async event => {
   switch (button.dataset.action) {
     case 'sync-sheet': await syncSheetNow(button); break;
     case 'preview-sheet': openSheetPreview(); break;
+    case 'tailor-resume': {
+      const application = state.applications.find(a => a.id === id);
+      if (application) await openTailoring(application, jobFor(application));
+      break;
+    }
     case 'new-profile': openProfile(); break;
     case 'edit-profile': openProfile(true); break;
     case 'new-job': openJob(); break;
@@ -639,7 +652,7 @@ document.addEventListener('click', async event => {
     case 'delete-application': await deleteRecord('application', id); break;
     case 'delete-reminder': await deleteRecord('reminder', id); break;
     case 'toggle-reminder': await toggleReminder(id, button); break;
-    case 'refresh': await loadWorkspace(); break;
+    case 'refresh': await refreshWorkspace(button); break;
     case 'clear-filters': Object.keys(trackerFilters).forEach(key => trackerFilters[key] = ''); state.query = ''; state.status = ''; state.applicationTab = 'All'; listPage = 1; render(); break;
   }
 });

@@ -68,12 +68,12 @@ public sealed class GoogleSheetsSyncService(JobApplicationsDbContext db, IGoogle
                         if(localIdentity!=row.Identity && jobs.Any(j=>j.Id!=job.Id && GoogleSheetRow.IdentityFor(j.Company,j.Title,j.Location,j.JobUrl)==row.Identity)) {
                             Skip("ID appears to have moved to a different existing job. Sort the entire row including column T, or reconcile this ID.");continue;
                         }
-                        if(binding.LastSourceHash!=row.SourceHash) {
-                            var before=JsonSerializer.Serialize(job);
-                            ApplyPosting(job,row);
-                            if(before!=JsonSerializer.Serialize(job))updated++;
-                            binding.LastSourceHash=row.SourceHash;
-                        }
+                        // The same source hash does not prove the local posting still matches.
+                        // Reconcile sheet-owned fields even after a local edit or an older import.
+                        var before=JsonSerializer.Serialize(job);
+                        ApplyPosting(job,row);
+                        if(before!=JsonSerializer.Serialize(job))updated++;
+                        binding.LastSourceHash=row.SourceHash;
                         // Application records are never updated by this path.
                     } else {
                         if(jobs.Any(j=>GoogleSheetRow.IdentityFor(j.Company,j.Title,j.Location,j.JobUrl)==row.Identity)){
