@@ -79,6 +79,23 @@ public class GoogleSheetsSyncTests
         Assert.Equal(1,await database.Context.GoogleSheetBindings.CountAsync());
     }
     [Fact]
+    public async Task UnchangedSourceHash_ReconcilesLocalPostingDrift_WithoutChangingApplication()
+    {
+        using var database=new TestDatabase<JobApplicationsDbContext>(o=>new(o));var db=database.Context;
+        await Seed(db);var source=new Source();var service=Service(db,source);
+        await service.RunAsync(default);
+        var hash=(await db.GoogleSheetBindings.SingleAsync()).LastSourceHash;
+        var job=await db.Jobs.SingleAsync();job.PostingAvailability="Open";job.AvailabilityCheckNotes="Outdated local evidence";
+        await db.SaveChangesAsync();
+        var result=await service.RunAsync(default);
+        Assert.Equal(1,result.Updated);Assert.Equal("Closed",job.PostingAvailability);
+        Assert.Equal(source.Rows[1][17],job.AvailabilityCheckNotes);
+        Assert.Equal(hash,(await db.GoogleSheetBindings.SingleAsync()).LastSourceHash);
+        Assert.Equal("Personal notes",(await db.Applications.SingleAsync()).Notes);
+        Assert.Equal(ApplicationStatus.Interview,(await db.Applications.SingleAsync()).Status);
+        Assert.Equal(0,(await service.RunAsync(default)).Updated);
+    }
+    [Fact]
     public async Task DuplicateOrMissingIds_NeverGuessOrCreateDuplicates()
     {
         using var database=new TestDatabase<JobApplicationsDbContext>(o=>new(o));await Seed(database.Context);

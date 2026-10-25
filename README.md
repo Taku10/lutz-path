@@ -10,6 +10,7 @@ Built with C#/.NET 10, ASP.NET Core Web APIs, EF Core, SQLite, Docker Compose, a
 - Company directories and individual job detail pages.
 - Application statuses, interview dates, priority, notes, and preparation information.
 - Follow-up and interview reminders.
+- Master Word resume uploads, tailoring profiles, AI drafts, and versioned Word exports. See [resume setup](docs/resumes.md).
 - Optional Google Sheets sync with permanent source IDs and protected application fields.
 
 ## Quick start
@@ -37,6 +38,7 @@ See [Google Sheets setup](docs/google-sheets.md) before enabling it. The base Co
 | User Service | Profiles | [localhost:5001/swagger](http://localhost:5001/swagger) |
 | Job Application Service | Jobs, applications, and sheet sync | [localhost:5002/swagger](http://localhost:5002/swagger) |
 | Reminder Service | Follow-ups, interviews, and deadlines | [localhost:5003/swagger](http://localhost:5003/swagger) |
+| Resume Service | Master resumes, tailoring profiles, drafts, and Word exports | [health](http://localhost:5004/health) |
 
 Each API owns a separate SQLite database. Services validate cross-service references through HTTP, using Docker service names inside containers. Nginx serves the frontend and proxies browser API requests.
 
@@ -45,6 +47,7 @@ Each API owns a separate SQLite database. Services validate cross-service refere
 | Users | users-data | /data/users.db |
 | Jobs and applications | applications-data | /data/jobapplications.db |
 | Reminders | reminders-data | /data/reminders.db |
+| Resumes and Word files | resumes-data | /data/resumes.db and /data/documents/ |
 
 Docker prefixes volume names with the Compose project name. Reuse the same project to retain data. Containers apply checked-in EF Core migrations at startup.
 
@@ -58,7 +61,7 @@ This preserves database volumes. Adding --volumes deletes their data.
 
 ~~~text
 frontend/       Static UI, Nginx configuration, and browser tests
-src/            Three ASP.NET Core API projects and their migrations
+src/            Four ASP.NET Core API projects and their migrations
 tests/          Backend service, SQLite, HTTP client, and sync tests
 scripts/        API, container, browser, and workbook-import utilities
 docs/           Development, spreadsheet mapping, and sync guides

@@ -1,0 +1,21 @@
+using LutzPath.ResumeService.Models;
+using LutzPath.ResumeService.Services;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+var sqlite = new SqliteConnectionStringBuilder(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=resumes.db");
+if (!Path.IsPathRooted(sqlite.DataSource) && sqlite.DataSource != ":memory:") sqlite.DataSource = Path.Combine(builder.Environment.ContentRootPath, sqlite.DataSource);
+builder.Services.AddDbContext<ResumesDbContext>(o => o.UseSqlite(sqlite.ConnectionString));
+builder.Services.AddHttpClient("users", c => { c.BaseAddress = new Uri(builder.Configuration["Services:UserService"] ?? "http://localhost:5001/"); c.Timeout = TimeSpan.FromSeconds(5); });
+builder.Services.AddHttpClient("applications", c => { c.BaseAddress = new Uri(builder.Configuration["Services:JobApplicationService"] ?? "http://localhost:5002/"); c.Timeout = TimeSpan.FromSeconds(5); });
+builder.Services.AddHttpClient<ITailoringClient, TailoringClient>(c => c.Timeout = TimeSpan.FromMinutes(3));
+builder.Services.AddHostedService<GenerationWorker>();
+var app = builder.Build();
+app.UseExceptionHandler();
+using (var scope = app.Services.CreateScope()) await scope.ServiceProvider.GetRequiredService<ResumesDbContext>().Database.MigrateAsync();
+app.MapGet("/health", () => new { status = "Healthy", service = "ResumeService" });
+app.MapControllers();
+app.Run();

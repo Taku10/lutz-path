@@ -1,5 +1,18 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+
+// Small stored ZIP fixture: enough WordprocessingML to test a real multipart upload.
+function sampleResume() {
+  const content = Buffer.from('<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Avery Parker</w:t></w:r></w:p><w:p><w:r><w:t>Built a C# job tracker using ASP.NET Core and SQLite.</w:t></w:r></w:p></w:body></w:document>');
+  const name = Buffer.from('word/document.xml');
+  let crc = 0xffffffff;
+  for (const byte of content) { crc ^= byte; for (let i=0;i<8;i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0); }
+  crc = (crc ^ 0xffffffff) >>> 0;
+  const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50); local.writeUInt16LE(20,4); local.writeUInt32LE(crc,14); local.writeUInt32LE(content.length,18); local.writeUInt32LE(content.length,22); local.writeUInt16LE(name.length,26);
+  const central = Buffer.alloc(46); central.writeUInt32LE(0x02014b50); central.writeUInt16LE(20,4); central.writeUInt16LE(20,6); central.writeUInt32LE(crc,16); central.writeUInt32LE(content.length,20); central.writeUInt32LE(content.length,24); central.writeUInt16LE(name.length,28);
+  const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50); end.writeUInt16LE(1,8); end.writeUInt16LE(1,10); end.writeUInt32LE(central.length+name.length,12); end.writeUInt32LE(local.length+name.length+content.length,16);
+  return Buffer.concat([local,name,content,central,name,end]);
+}
 test.describe.configure({ mode: 'serial' });
 test.use({ actionTimeout: 15000 });
 let userId, jobId, applicationId;
@@ -203,10 +216,73 @@ test('automatic sync status and Sync now report progress and preserve jobs on fa
   await page.getByRole('button',{name:'Sync now',exact:true}).click();
   await expect(page.getByRole('button',{name:'Sync now',exact:true})).toBeEnabled();
   expect(calls).toBe(1);
+  await page.getByRole('button',{name:'Refresh workspace',exact:true}).click();
+  await expect(page.locator('#refresh-button')).not.toHaveClass(/spinning/);
+  expect(calls).toBe(2);
   failed=true;
   await page.getByRole('button',{name:'Sync now',exact:true}).click();
   await expect(page.getByRole('region',{name:'Google Sheets sync'})).toContainText('Google is unavailable');
   await expect(rowButtons(page)).toHaveCount(25);
   const rows=await(await request.get('/api/applications/user/'+userId)).json();
   expect(rows.length).toBe(32);
+});
+
+test('master Word upload, approval, tailoring profiles, setup guidance and profile isolation', async ({page,request}) => {
+  await page.goto('/#resumes');
+  await expect(page.getByRole('heading',{name:'Resumes',exact:true})).toBeVisible();
+  await page.getByLabel('Word document (.docx, up to 2 MB)').setInputFiles({name:'master.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:sampleResume()});
+  await page.getByRole('button',{name:'Upload master resume',exact:true}).click();
+  const modal=page.locator('#resume-editor');
+  await expect(modal.getByRole('heading',{name:'Review master resume'})).toBeVisible();
+  await expect(modal.getByLabel('Master resume content')).toContainText('Avery Parker');
+  await modal.getByRole('button',{name:'Approve master content'}).click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'View master'})).toBeVisible();
+  await page.getByRole('button',{name:'New tailoring profile'}).click();
+  await modal.getByLabel('Profile name').fill('Graduate developer');
+  await modal.getByRole('button',{name:'Save profile',exact:true}).click();
+  await expect(page.getByText('Graduate developer',{exact:true})).toBeVisible();
+  const stored=await(await request.get('/api/resumes?userId='+userId)).json();
+  expect(stored.masters[0].approved).toBe(true);
+  expect(stored.profiles[0].name).toBe('Graduate developer');
+  await page.goto('/#job/'+jobId);
+  await page.getByRole('button',{name:'Tailor resume',exact:true}).click();
+  await expect(modal).toContainText('Configure the AI key and model');
+  await modal.getByRole('link',{name:'Open Resumes'}).click();
+  const users=await(await request.get('/api/users')).json();
+  const other=users.find(u=>u.id!==userId);
+  await page.locator('#profile-select').selectOption(String(other.id));
+  await expect(page.getByText('No master uploaded yet.')).toBeVisible();
+  await expect(page.getByText('Graduate developer',{exact:true})).toHaveCount(0);
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('tailoring UI handles a simulated AI draft, review and Word export',async({page})=>{
+  let generated=false,edited=false,exported=false;
+  const fakeDraft={id:900,userId,applicationId,jobTitle:'Microsoft · Graduate Software Engineer',status:'Ready',content:'Avery Parker\nBuilt a C# job tracker.',reviewNotes:'Highlight relevant projects. Source line 2.',masterSnapshot:'Avery Parker\nBuilt a C# job tracker.',jobDescription:'Example job description',profileSnapshot:'Example preferences',createdAt:'2026-10-25T12:00:00Z'};
+  await page.route('**/api/resumes/settings',r=>r.fulfill({json:{configured:true,model:'fake-test-model'}}));
+  await page.route('**/api/resumes?userId=*',async r=>{
+    const actual=await r.fetch(); const data=await actual.json();
+    if(generated)data.drafts.unshift(fakeDraft);
+    if(exported)data.documents.unshift({id:900,draftId:900,submitted:false});
+    await r.fulfill({json:data});
+  });
+  await page.route('**/api/resumes/drafts',async r=>{expect(r.request().postDataJSON().applicationId).toBe(applicationId);generated=true;await r.fulfill({status:202,json:{id:900,status:'Queued'}});});
+  await page.route('**/api/resumes/drafts/900?*',async r=>{
+    if(r.request().method()==='PUT'){edited=true;await r.fulfill({status:204});}
+    else await r.fulfill({json:fakeDraft});
+  });
+  await page.route('**/api/resumes/drafts/900/export?*',async r=>{exported=true;await r.fulfill({json:{id:900}});});
+  await page.goto('/#job/'+jobId);
+  await page.getByRole('button',{name:'Tailor resume',exact:true}).click();
+  const modal=page.locator('#resume-editor');
+  await modal.getByLabel('Full job description').fill('We are looking for a graduate software engineer with C# and ASP.NET Core experience, interested in building useful web applications.');
+  await modal.getByRole('button',{name:'Generate draft',exact:true}).click();
+  await page.getByRole('button',{name:'Open draft',exact:true}).click();
+  await modal.getByLabel('Resume content', {exact:true}).fill('Avery Parker\nDeveloped a C# job tracker.');
+  await modal.getByRole('checkbox').check();
+  await modal.getByRole('button',{name:'Save & export Word',exact:true}).click();
+  await expect(modal.getByRole('link',{name:'Download Word resume'})).toBeVisible();
+  expect(edited&&exported).toBe(true);
 });

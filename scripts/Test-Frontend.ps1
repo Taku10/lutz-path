@@ -1,5 +1,5 @@
 param(
-    [ValidateRange(1024, 65532)]
+    [ValidateRange(1024, 65531)]
     [int]$BasePort = 5300
 )
 $ErrorActionPreference = 'Stop'
@@ -13,6 +13,8 @@ $env:FRONTEND_PORT = [string]$BasePort
 $env:USER_SERVICE_PORT = [string]($BasePort + 1)
 $env:JOB_APPLICATION_SERVICE_PORT = [string]($BasePort + 2)
 $env:REMINDER_SERVICE_PORT = [string]($BasePort + 3)
+$oldResumePort = $env:RESUME_SERVICE_PORT
+$env:RESUME_SERVICE_PORT = [string]($BasePort + 4)
 $env:LUTZPATH_UI_URL = "http://127.0.0.1:$BasePort"
 $started = $false
 
@@ -22,13 +24,13 @@ function Invoke-Compose {
 }
 
 try {
-    foreach ($port in @($BasePort, ($BasePort + 1), ($BasePort + 2), ($BasePort + 3))) {
+    foreach ($port in @($BasePort, ($BasePort + 1), ($BasePort + 2), ($BasePort + 3), ($BasePort + 4))) {
         $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $port)
         try { $listener.Start() } finally { $listener.Stop() }
     }
     $started = $true
     Invoke-Compose up --build --detach
-    foreach ($offset in @(1, 2, 3)) {
+    foreach ($offset in @(1, 2, 3, 4)) {
         $ready = $false
         for ($attempt = 0; $attempt -lt 40; $attempt++) {
             try {
@@ -59,6 +61,7 @@ try {
         "Optional test volume cleanup: docker compose --project-name $project --file docker-compose.yml down --volumes"
     ) | Set-Content -LiteralPath "$runDirectory/run-info.txt"
     $env:FRONTEND_PORT = $oldEnvironment[0]
+    $env:RESUME_SERVICE_PORT = $oldResumePort
     $env:USER_SERVICE_PORT = $oldEnvironment[1]
     $env:JOB_APPLICATION_SERVICE_PORT = $oldEnvironment[2]
     $env:REMINDER_SERVICE_PORT = $oldEnvironment[3]

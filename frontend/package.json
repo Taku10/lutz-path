@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test:ui": "playwright test",
-    "check": "node --check public/app.js && node --check public/icons.js"
+    "check": "node --check public/app.js && node --check public/icons.js && node --check public/resumes.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1"

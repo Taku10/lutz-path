@@ -1,5 +1,5 @@
 param(
-    [ValidateRange(1024, 65532)]
+    [ValidateRange(1024, 65531)]
     [int]$BasePort = 5201
 )
 
@@ -15,6 +15,8 @@ $env:USER_SERVICE_PORT = [string]$BasePort
 $env:JOB_APPLICATION_SERVICE_PORT = [string]($BasePort + 1)
 $env:REMINDER_SERVICE_PORT = [string]($BasePort + 2)
 $env:FRONTEND_PORT = [string]($BasePort + 3)
+$oldResumePort = $env:RESUME_SERVICE_PORT
+$env:RESUME_SERVICE_PORT = [string]($BasePort + 4)
 $script:checks = 0
 $composeStarted = $false
 
@@ -73,7 +75,7 @@ function Invoke-Api([string]$method, [int]$port, [string]$path, $body = $null, [
 
 try {
     # Do not stop an existing API to obtain a test port.
-    foreach ($port in @($BasePort, ($BasePort + 1), ($BasePort + 2))) {
+    foreach ($port in @($BasePort, ($BasePort + 1), ($BasePort + 2), ($BasePort + 3), ($BasePort + 4))) {
         $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $port)
         try { $listener.Start() } finally { $listener.Stop() }
     }
@@ -201,5 +203,6 @@ try {
     $env:JOB_APPLICATION_SERVICE_PORT = $oldPorts[1]
     $env:REMINDER_SERVICE_PORT = $oldPorts[2]
     $env:FRONTEND_PORT = $oldPorts[3]
+    $env:RESUME_SERVICE_PORT = $oldResumePort
     Write-Output "Test logs and project details: $runDirectory"
 }

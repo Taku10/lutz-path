@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LutzPath.UserService\LutzPath.UserService.csproj" />
+    <ProjectReference Include="..\..\src\LutzPath.ResumeService\LutzPath.ResumeService.csproj" />
     <ProjectReference Include="..\..\src\LutzPath.JobApplicationService\LutzPath.JobApplicationService.csproj" />
     <ProjectReference Include="..\..\src\LutzPath.ReminderService\LutzPath.ReminderService.csproj" />
   </ItemGroup>
