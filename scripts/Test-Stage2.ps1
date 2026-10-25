@@ -179,7 +179,7 @@ try {
             userId = 999999; jobId = $job.id; status = 'Withdrawn'
             dateApplied = $null; interviewDate = $null; notes = 'Must not be saved'
         }
-        Invoke-Api PUT 5102 "/api/applications/$($application.id)" $invalidUserUpdate 400
+        Invoke-Api PUT 5102 "/api/applications/$($application.id)" $invalidUserUpdate 409
         $unchangedApplication = Invoke-Api GET 5102 "/api/applications/$($application.id)"
         Assert-True ($unchangedApplication.userId -eq $user.id -and $unchangedApplication.notes -eq 'Interview booked') 'Invalid-user update changed an application'
         Invoke-Api POST 5103 '/api/reminders' @{

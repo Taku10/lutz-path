@@ -1,4 +1,4 @@
-﻿using LutzPath.JobApplicationService.Data;
+using LutzPath.JobApplicationService.Data;
 using LutzPath.JobApplicationService.DTOs;
 using LutzPath.JobApplicationService.Exceptions;
 using LutzPath.JobApplicationService.Models;
@@ -76,7 +76,7 @@ public class ApplicationServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_UnknownUser_LeavesOriginalValuesUnchanged()
+    public async Task UpdateAsync_DifferentUser_LeavesOriginalValuesUnchanged()
     {
         using var database = CreateDatabase();
         var job = await AddJobAsync(database.Context);
@@ -89,7 +89,7 @@ public class ApplicationServiceTests
         update.Status = ApplicationStatus.Withdrawn;
         update.Notes = "Must not be saved";
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.UpdateAsync(original.Id, update, CancellationToken.None));
 
         database.Context.ChangeTracker.Clear();

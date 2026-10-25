@@ -23,7 +23,7 @@ public class ApplicationService : IApplicationService
         return await _db.Applications.AsNoTracking().OrderBy(application => application.Id)
             .Select(application => new ApplicationResponse(application.Id, application.UserId,
                 application.JobId, application.Status, application.DateApplied,
-                application.InterviewDate, application.Notes))
+                application.InterviewDate, application.Notes, application.DateFound, application.Priority, application.InterviewPrepNotes, application.ResumeTips, application.DsaTopicsToKnow, application.AdditionalSourceNotes))
             .ToListAsync(cancellationToken);
     }
 
@@ -40,7 +40,7 @@ public class ApplicationService : IApplicationService
             .OrderBy(application => application.Id)
             .Select(application => new ApplicationResponse(application.Id, application.UserId,
                 application.JobId, application.Status, application.DateApplied,
-                application.InterviewDate, application.Notes))
+                application.InterviewDate, application.Notes, application.DateFound, application.Priority, application.InterviewPrepNotes, application.ResumeTips, application.DsaTopicsToKnow, application.AdditionalSourceNotes))
             .ToListAsync(cancellationToken);
     }
 
@@ -61,6 +61,11 @@ public class ApplicationService : IApplicationService
         if (application is null)
         {
             return null;
+        }
+
+        if (request.JobId != application.JobId || request.UserId != application.UserId)
+        {
+            throw new InvalidOperationException("An existing application cannot be moved to another job or profile. Create a separate application instead.");
         }
 
         await ValidateJobAsync(request.JobId, cancellationToken);
@@ -133,9 +138,15 @@ public class ApplicationService : IApplicationService
         application.DateApplied = request.DateApplied;
         application.InterviewDate = request.InterviewDate;
         application.Notes = request.Notes?.Trim();
+        application.DateFound = request.DateFound;
+        application.Priority = request.Priority?.Trim();
+        application.InterviewPrepNotes = request.InterviewPrepNotes?.Trim();
+        application.ResumeTips = request.ResumeTips?.Trim();
+        application.DsaTopicsToKnow = request.DsaTopicsToKnow?.Trim();
+        application.AdditionalSourceNotes = request.AdditionalSourceNotes?.Trim();
     }
 
     private static ApplicationResponse ToResponse(JobApplication application) =>
         new(application.Id, application.UserId, application.JobId, application.Status,
-            application.DateApplied, application.InterviewDate, application.Notes);
+            application.DateApplied, application.InterviewDate, application.Notes, application.DateFound, application.Priority, application.InterviewPrepNotes, application.ResumeTips, application.DsaTopicsToKnow, application.AdditionalSourceNotes);
 }

@@ -1,12 +1,36 @@
+# .NET build and IDE output
 **/bin/
 **/obj/
+**/TestResults/
 .vs/
 *.user
 *.suo
+
+# SQLite data and journals
 *.db
 *.db-shm
 *.db-wal
-.env
-.artifacts/
 *.db-journal
-**/TestResults/
+
+# Local configuration (keep the shareable example)
+.env
+.env.*
+!.env.example
+
+# Private reports, import ledgers, snapshots, and backups
+.artifacts/
+
+# Installed frontend dependencies and generated browser results
+**/node_modules/
+**/playwright-report/
+**/test-results/
+
+# Local credentials and private keys
+.secrets/
+secrets/
+**/google-service-account*.json
+**/service-account*.json
+**/credentials*.json
+**/lutzpath-*.json
+*.pem
+*.key

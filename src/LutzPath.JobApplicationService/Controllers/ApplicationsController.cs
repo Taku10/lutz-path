@@ -61,6 +61,10 @@ public class ApplicationsController : ControllerBase
             var result = await _service.UpdateAsync(id, request, cancellationToken);
             return result is null ? NotFound() : Ok(result);
         }
+        catch (InvalidOperationException exception)
+        {
+            return Problem(statusCode: 409, title: "Application relationship cannot change", detail: exception.Message);
+        }
         catch (ArgumentException exception)
         {
             return Problem(statusCode: 400, title: "Invalid application", detail: exception.Message);

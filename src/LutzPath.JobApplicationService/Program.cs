@@ -1,3 +1,4 @@
+using LutzPath.JobApplicationService.Integrations;
 ﻿using System.Text.Json.Serialization;
 using LutzPath.JobApplicationService.Clients;
 using LutzPath.JobApplicationService.Data;
@@ -33,6 +34,15 @@ builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>(client =>
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(5);
 });
+
+builder.Services.Configure<GoogleSheetsOptions>(builder.Configuration.GetSection("GoogleSheets"));
+builder.Services.AddSingleton<IGoogleSheetsTokenProvider, GoogleSheetsTokenProvider>();
+builder.Services.AddHttpClient<IGoogleSheetsReader, GoogleSheetsReader>(client => client.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddScoped<GoogleSheetsPreviewService>();
+builder.Services.AddSingleton<GoogleSheetsSyncCoordinator>();
+builder.Services.AddHttpClient<IGoogleSheetsIdWriter, GoogleSheetsIdWriter>(client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddScoped<GoogleSheetsSyncService>();
+builder.Services.AddHostedService<GoogleSheetsSyncWorker>();
 
 var app = builder.Build();
 

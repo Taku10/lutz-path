@@ -7,4 +7,10 @@ public record JobResponse(
     string? Location,
     string? JobUrl,
     string? Description,
-    DateOnly? DatePosted);
+    DateOnly? DatePosted,
+    string? OptFriendlyInformation,
+    string? H1bVisaInformation,
+    string? LikelyInterviewProcess,
+    string PostingAvailability,
+    DateTime? LastAvailabilityCheck,
+    string? AvailabilityCheckNotes);

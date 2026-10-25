@@ -17,11 +17,88 @@ namespace LutzPath.JobApplicationService.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
+            modelBuilder.Entity("LutzPath.JobApplicationService.Models.GoogleSheetBinding", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("JobId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LastSourceHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SheetId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SpreadsheetId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpreadsheetId", "SheetId", "SourceId")
+                        .IsUnique();
+
+                    b.HasIndex("SpreadsheetId", "SheetId", "UserId", "JobId")
+                        .IsUnique();
+
+                    b.ToTable("GoogleSheetBindings");
+                });
+
+            modelBuilder.Entity("LutzPath.JobApplicationService.Models.GoogleSheetSyncState", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Created")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSuccessUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Updated")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("WarningsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GoogleSheetSyncStates");
+                });
+
             modelBuilder.Entity("LutzPath.JobApplicationService.Models.Job", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AvailabilityCheckNotes")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Company")
                         .IsRequired()
@@ -33,10 +110,26 @@ namespace LutzPath.JobApplicationService.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("H1bVisaInformation")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("JobUrl")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LastAvailabilityCheck")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LikelyInterviewProcess")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Location")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OptFriendlyInformation")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PostingAvailability")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -54,16 +147,34 @@ namespace LutzPath.JobApplicationService.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AdditionalSourceNotes")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("DateApplied")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("DateFound")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DsaTopicsToKnow")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("InterviewDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InterviewPrepNotes")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("JobId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Priority")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResumeTips")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")

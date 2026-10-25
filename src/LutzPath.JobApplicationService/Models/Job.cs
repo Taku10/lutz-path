@@ -9,4 +9,15 @@ public class Job
     public string? JobUrl { get; set; }
     public string? Description { get; set; }
     public DateOnly? DatePosted { get; set; }
+    public string? OptFriendlyInformation { get; set; }
+
+    public string? H1bVisaInformation { get; set; }
+
+    public string? LikelyInterviewProcess { get; set; }
+
+    public string PostingAvailability { get; set; } = "Unknown";
+
+    public DateTime? LastAvailabilityCheck { get; set; }
+
+    public string? AvailabilityCheckNotes { get; set; }
 }
